@@ -17,9 +17,15 @@
       <div class="url-input-group">
         <input type="url" id="urlInput" placeholder="https://example.com/page" />
         <button id="fetchBtn" class="btn btn-primary">
-          <span class="btn-icon">🌐</span>
-          Fetch URL
+          <span class="btn-icon" id="fetchIcon">🌐</span>
+          <span id="fetchText">Fetch URL</span>
         </button>
+      </div>
+      <div class="fetch-progress" id="fetchProgress">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <span class="progress-text" id="progressText">Connecting...</span>
       </div>
       <p class="url-hint">Enter a URL to fetch its HTML, or paste HTML directly below</p>
     </div>

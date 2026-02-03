@@ -1,7 +1,7 @@
 import type { OutputMode, CleaningStats } from './types.js';
 import { parseAndClean, toPlainText, toMarkdown } from './cleaner.js';
 import { toJSON, estimateTokens } from './chunker.js';
-import { fetchUrl, isValidUrl } from './fetcher.js';
+import { fetchUrl, isValidUrl, type FetchProgress } from './fetcher.js';
 
 // DOM Elements
 const htmlInput = document.getElementById('htmlInput') as HTMLTextAreaElement;
@@ -15,6 +15,11 @@ const chunkSizeInput = document.getElementById('chunkSize') as HTMLInputElement;
 const toast = document.getElementById('toast') as HTMLDivElement;
 const urlInput = document.getElementById('urlInput') as HTMLInputElement;
 const fetchBtn = document.getElementById('fetchBtn') as HTMLButtonElement;
+const fetchProgress = document.getElementById('fetchProgress') as HTMLDivElement;
+const progressFill = document.getElementById('progressFill') as HTMLDivElement;
+const progressText = document.getElementById('progressText') as HTMLSpanElement;
+const fetchIcon = document.getElementById('fetchIcon') as HTMLSpanElement;
+const fetchText = document.getElementById('fetchText') as HTMLSpanElement;
 
 // State
 let currentOutput = '';
@@ -237,6 +242,26 @@ chunkSizeInput.addEventListener('change', () => {
 });
 
 /**
+ * Update fetch progress UI
+ */
+function updateFetchProgress(progress: FetchProgress): void {
+  progressFill.style.width = `${progress.percent}%`;
+  progressText.textContent = progress.message;
+}
+
+/**
+ * Show/hide fetch progress bar
+ */
+function setFetchProgressVisible(visible: boolean): void {
+  if (visible) {
+    fetchProgress.classList.add('active');
+    progressFill.style.width = '0%';
+  } else {
+    fetchProgress.classList.remove('active');
+  }
+}
+
+/**
  * Fetch HTML from URL
  */
 async function fetchFromUrl(): Promise<void> {
@@ -254,10 +279,12 @@ async function fetchFromUrl(): Promise<void> {
   
   // Show loading state
   fetchBtn.disabled = true;
-  fetchBtn.innerHTML = '<span class="btn-icon">⏳</span> Fetching...';
+  fetchIcon.innerHTML = '<span class="spinner"></span>';
+  fetchText.textContent = 'Fetching...';
+  setFetchProgressVisible(true);
   
   try {
-    const result = await fetchUrl(url);
+    const result = await fetchUrl(url, updateFetchProgress);
     
     if (result.success && result.html) {
       htmlInput.value = result.html;
@@ -271,7 +298,11 @@ async function fetchFromUrl(): Promise<void> {
   } finally {
     // Reset button
     fetchBtn.disabled = false;
-    fetchBtn.innerHTML = '<span class="btn-icon">🌐</span> Fetch URL';
+    fetchIcon.innerHTML = '🌐';
+    fetchText.textContent = 'Fetch URL';
+    
+    // Hide progress after a short delay
+    setTimeout(() => setFetchProgressVisible(false), 1000);
   }
 }
 

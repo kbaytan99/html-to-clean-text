@@ -22,11 +22,17 @@ export function isValidUrl(url) {
 /**
  * Fetch HTML from a URL using CORS proxies
  */
-export async function fetchUrl(url) {
+export async function fetchUrl(url, onProgress) {
     if (!isValidUrl(url)) {
         return { success: false, error: 'Invalid URL format' };
     }
+    const totalSteps = CORS_PROXIES.length + 1; // +1 for direct attempt
     // Try direct fetch first (might work for some sites)
+    onProgress?.({
+        stage: 'connecting',
+        message: 'Trying direct connection...',
+        percent: 10
+    });
     try {
         const response = await fetch(url, {
             method: 'GET',
@@ -35,7 +41,17 @@ export async function fetchUrl(url) {
             },
         });
         if (response.ok) {
+            onProgress?.({
+                stage: 'downloading',
+                message: 'Downloading content...',
+                percent: 80
+            });
             const html = await response.text();
+            onProgress?.({
+                stage: 'done',
+                message: 'Complete!',
+                percent: 100
+            });
             return { success: true, html, usedProxy: 'direct' };
         }
     }
@@ -43,7 +59,16 @@ export async function fetchUrl(url) {
         // Direct fetch failed, try proxies
     }
     // Try each CORS proxy
-    for (const proxy of CORS_PROXIES) {
+    for (let i = 0; i < CORS_PROXIES.length; i++) {
+        const proxy = CORS_PROXIES[i];
+        const progressPercent = 20 + ((i + 1) / totalSteps) * 60;
+        onProgress?.({
+            stage: 'trying-proxy',
+            message: `Trying proxy ${i + 1}/${CORS_PROXIES.length}...`,
+            percent: progressPercent,
+            proxyIndex: i + 1,
+            totalProxies: CORS_PROXIES.length
+        });
         try {
             const proxyUrl = proxy.url + encodeURIComponent(url);
             const controller = new AbortController();
@@ -54,6 +79,11 @@ export async function fetchUrl(url) {
             });
             clearTimeout(timeout);
             if (response.ok) {
+                onProgress?.({
+                    stage: 'downloading',
+                    message: 'Downloading content...',
+                    percent: 85
+                });
                 let html = await response.text();
                 // Handle JSON response from some proxies
                 if (proxy.isJson && proxy.contentKey) {
@@ -67,6 +97,11 @@ export async function fetchUrl(url) {
                 }
                 // Validate it looks like HTML
                 if (html.includes('<') && (html.includes('</') || html.includes('/>'))) {
+                    onProgress?.({
+                        stage: 'done',
+                        message: 'Complete!',
+                        percent: 100
+                    });
                     return { success: true, html, usedProxy: proxy.url };
                 }
             }
@@ -76,6 +111,11 @@ export async function fetchUrl(url) {
             continue;
         }
     }
+    onProgress?.({
+        stage: 'error',
+        message: 'All methods failed',
+        percent: 100
+    });
     return {
         success: false,
         error: 'Could not fetch URL. The site may be blocking requests. Try copying the HTML manually (Ctrl+U in browser, then copy all).'

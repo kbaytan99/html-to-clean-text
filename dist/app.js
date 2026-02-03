@@ -13,6 +13,11 @@ const chunkSizeInput = document.getElementById('chunkSize');
 const toast = document.getElementById('toast');
 const urlInput = document.getElementById('urlInput');
 const fetchBtn = document.getElementById('fetchBtn');
+const fetchProgress = document.getElementById('fetchProgress');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const fetchIcon = document.getElementById('fetchIcon');
+const fetchText = document.getElementById('fetchText');
 // State
 let currentOutput = '';
 let currentMode = 'plaintext';
@@ -207,6 +212,25 @@ chunkSizeInput.addEventListener('change', () => {
     }
 });
 /**
+ * Update fetch progress UI
+ */
+function updateFetchProgress(progress) {
+    progressFill.style.width = `${progress.percent}%`;
+    progressText.textContent = progress.message;
+}
+/**
+ * Show/hide fetch progress bar
+ */
+function setFetchProgressVisible(visible) {
+    if (visible) {
+        fetchProgress.classList.add('active');
+        progressFill.style.width = '0%';
+    }
+    else {
+        fetchProgress.classList.remove('active');
+    }
+}
+/**
  * Fetch HTML from URL
  */
 async function fetchFromUrl() {
@@ -221,9 +245,11 @@ async function fetchFromUrl() {
     }
     // Show loading state
     fetchBtn.disabled = true;
-    fetchBtn.innerHTML = '<span class="btn-icon">⏳</span> Fetching...';
+    fetchIcon.innerHTML = '<span class="spinner"></span>';
+    fetchText.textContent = 'Fetching...';
+    setFetchProgressVisible(true);
     try {
-        const result = await fetchUrl(url);
+        const result = await fetchUrl(url, updateFetchProgress);
         if (result.success && result.html) {
             htmlInput.value = result.html;
             showToast(`Fetched successfully${result.usedProxy !== 'direct' ? ' (via proxy)' : ''}`, 'success');
@@ -239,7 +265,10 @@ async function fetchFromUrl() {
     finally {
         // Reset button
         fetchBtn.disabled = false;
-        fetchBtn.innerHTML = '<span class="btn-icon">🌐</span> Fetch URL';
+        fetchIcon.innerHTML = '🌐';
+        fetchText.textContent = 'Fetch URL';
+        // Hide progress after a short delay
+        setTimeout(() => setFetchProgressVisible(false), 1000);
     }
 }
 // URL Fetch event listener
