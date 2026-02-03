@@ -1,6 +1,7 @@
 import type { OutputMode, CleaningStats } from './types.js';
 import { parseAndClean, toPlainText, toMarkdown } from './cleaner.js';
 import { toJSON, estimateTokens } from './chunker.js';
+import { fetchUrl, isValidUrl } from './fetcher.js';
 
 // DOM Elements
 const htmlInput = document.getElementById('htmlInput') as HTMLTextAreaElement;
@@ -12,6 +13,8 @@ const clearInput = document.getElementById('clearInput') as HTMLButtonElement;
 const statsEl = document.getElementById('stats') as HTMLDivElement;
 const chunkSizeInput = document.getElementById('chunkSize') as HTMLInputElement;
 const toast = document.getElementById('toast') as HTMLDivElement;
+const urlInput = document.getElementById('urlInput') as HTMLInputElement;
+const fetchBtn = document.getElementById('fetchBtn') as HTMLButtonElement;
 
 // State
 let currentOutput = '';
@@ -230,6 +233,56 @@ document.querySelectorAll('input[name="outputMode"]').forEach(radio => {
 chunkSizeInput.addEventListener('change', () => {
   if (currentOutput && currentMode === 'json') {
     cleanHTML();
+  }
+});
+
+/**
+ * Fetch HTML from URL
+ */
+async function fetchFromUrl(): Promise<void> {
+  const url = urlInput.value.trim();
+  
+  if (!url) {
+    showToast('Please enter a URL', 'error');
+    return;
+  }
+  
+  if (!isValidUrl(url)) {
+    showToast('Please enter a valid URL (http:// or https://)', 'error');
+    return;
+  }
+  
+  // Show loading state
+  fetchBtn.disabled = true;
+  fetchBtn.innerHTML = '<span class="btn-icon">⏳</span> Fetching...';
+  
+  try {
+    const result = await fetchUrl(url);
+    
+    if (result.success && result.html) {
+      htmlInput.value = result.html;
+      showToast(`Fetched successfully${result.usedProxy !== 'direct' ? ' (via proxy)' : ''}`, 'success');
+      cleanBtn.focus();
+    } else {
+      showToast(result.error || 'Failed to fetch URL', 'error');
+    }
+  } catch (error) {
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    // Reset button
+    fetchBtn.disabled = false;
+    fetchBtn.innerHTML = '<span class="btn-icon">🌐</span> Fetch URL';
+  }
+}
+
+// URL Fetch event listener
+fetchBtn.addEventListener('click', fetchFromUrl);
+
+// Enter key in URL input
+urlInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    fetchFromUrl();
   }
 });
 
