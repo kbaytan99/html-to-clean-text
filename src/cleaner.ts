@@ -11,22 +11,16 @@ const REMOVE_TAGS = new Set([
 ]);
 
 // Semantic tags that typically contain non-content
+// More conservative approach - only remove obvious noise
 const NOISE_SELECTORS = [
-  'nav', 'header:not(article header)', 'footer:not(article footer)',
-  'aside', '.sidebar', '#sidebar', '[role="navigation"]',
-  '[role="banner"]', '[role="contentinfo"]', '[role="complementary"]',
-  '.nav', '.navigation', '.menu', '.navbar', '.header', '.footer',
+  '.sidebar', '#sidebar', '[role="navigation"]',
+  '[role="complementary"]',
   '.ad', '.ads', '.advertisement', '.sponsored', '.promo',
   '.cookie', '.cookie-banner', '.cookie-notice', '.consent',
-  '.popup', '.modal', '.overlay', '.toast', '.notification',
-  '.social', '.share', '.sharing', '.social-share',
-  '.comments', '.comment-section', '#comments',
-  '.related', '.recommended', '.suggestions',
-  '.newsletter', '.subscribe', '.subscription',
-  '.breadcrumb', '.breadcrumbs', '.pagination',
-  '[hidden]', '[aria-hidden="true"]', '.hidden', '.hide',
-  '.sr-only', '.visually-hidden', '.screen-reader-text',
-  'form', 'input', 'button', 'select', 'textarea'
+  '.popup', '.modal', '.overlay',
+  '.social-share', '.share-buttons',
+  '[hidden]', '[aria-hidden="true"]', '.hidden',
+  '.sr-only', '.visually-hidden', '.screen-reader-text'
 ];
 
 // Block-level elements that should create paragraph breaks
@@ -50,8 +44,23 @@ export interface ExtractedElement {
  * Parse and clean HTML content
  */
 export function parseAndClean(html: string): ExtractedElement[] {
+  // Handle potential JSON wrapper from some proxies
+  let cleanHtml = html;
+  try {
+    const parsed = JSON.parse(html);
+    if (parsed.contents) {
+      cleanHtml = parsed.contents;
+    } else if (parsed.html) {
+      cleanHtml = parsed.html;
+    } else if (typeof parsed === 'string') {
+      cleanHtml = parsed;
+    }
+  } catch {
+    // Not JSON, use as-is
+  }
+
   const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
+  const doc = parser.parseFromString(cleanHtml, 'text/html');
   
   // Remove unwanted tags
   removeUnwantedElements(doc);
@@ -59,8 +68,9 @@ export function parseAndClean(html: string): ExtractedElement[] {
   // Remove noise selectors
   removeNoiseElements(doc);
   
-  // Extract content from body or the whole document
-  const body = doc.body || doc.documentElement;
+  // Try to find main content area first
+  const mainContent = doc.querySelector('main, article, [role="main"], #content, .content, #main, .main, .post, .article, .entry-content, .post-content');
+  const body = mainContent || doc.body || doc.documentElement;
   
   // Extract structured content
   const elements = extractElements(body);

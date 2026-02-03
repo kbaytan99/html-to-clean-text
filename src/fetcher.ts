@@ -4,9 +4,9 @@
 
 // List of CORS proxies to try (in order)
 const CORS_PROXIES = [
-  'https://api.allorigins.win/raw?url=',
-  'https://corsproxy.io/?',
-  'https://api.codetabs.com/v1/proxy?quest=',
+  { url: 'https://api.allorigins.win/get?url=', isJson: true, contentKey: 'contents' },
+  { url: 'https://corsproxy.io/?', isJson: false },
+  { url: 'https://api.codetabs.com/v1/proxy?quest=', isJson: false },
 ];
 
 export interface FetchResult {
@@ -56,10 +56,10 @@ export async function fetchUrl(url: string): Promise<FetchResult> {
   // Try each CORS proxy
   for (const proxy of CORS_PROXIES) {
     try {
-      const proxyUrl = proxy + encodeURIComponent(url);
+      const proxyUrl = proxy.url + encodeURIComponent(url);
       
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
       
       const response = await fetch(proxyUrl, {
         method: 'GET',
@@ -69,11 +69,21 @@ export async function fetchUrl(url: string): Promise<FetchResult> {
       clearTimeout(timeout);
       
       if (response.ok) {
-        const html = await response.text();
+        let html = await response.text();
+        
+        // Handle JSON response from some proxies
+        if (proxy.isJson && proxy.contentKey) {
+          try {
+            const jsonData = JSON.parse(html);
+            html = jsonData[proxy.contentKey] || html;
+          } catch {
+            // Not valid JSON, use raw response
+          }
+        }
         
         // Validate it looks like HTML
         if (html.includes('<') && (html.includes('</') || html.includes('/>'))) {
-          return { success: true, html, usedProxy: proxy };
+          return { success: true, html, usedProxy: proxy.url };
         }
       }
     } catch {
