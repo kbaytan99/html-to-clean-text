@@ -239,7 +239,9 @@ This is the second paragraph with all HTML noise removed.
 
 ## 📜 License
 
-MIT License - Feel free to use, modify, and distribute.
+**All Rights Reserved** - Copyright (c) 2026 kbaytan99
+
+This software is proprietary. No permission is granted to copy, modify, distribute, or use this software without explicit written permission from the copyright holder.
 
 ## 🤝 Contributing
 
