@@ -1,0 +1,28 @@
+{
+  "name": "html-to-clean-text",
+  "version": "1.0.0",
+  "description": "100% client-side HTML to clean text converter for AI/LLM pipelines",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "serve": "npx serve .",
+    "dev": "concurrently \"npm run watch\" \"npm run serve\""
+  },
+  "keywords": [
+    "html",
+    "parser",
+    "cleaner",
+    "llm",
+    "ai",
+    "text-extraction",
+    "markdown"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "concurrently": "^8.2.0",
+    "serve": "^14.2.0"
+  }
+}

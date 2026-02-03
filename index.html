@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML to Clean Text Converter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🧹 HTML to Clean Text</h1>
+      <p class="subtitle">Convert messy HTML into AI-ready content</p>
+    </header>
+
+    <div class="controls">
+      <div class="output-mode">
+        <label>Output Format:</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="outputMode" value="plaintext" checked>
+            <span>Plain Text</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="outputMode" value="markdown">
+            <span>Markdown</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="outputMode" value="json">
+            <span>JSON for LLMs</span>
+          </label>
+        </div>
+      </div>
+      <div class="chunk-settings">
+        <label for="chunkSize">Chunk Size (tokens):</label>
+        <input type="number" id="chunkSize" value="1000" min="400" max="2000" step="100">
+      </div>
+    </div>
+
+    <main class="editor-container">
+      <div class="panel input-panel">
+        <div class="panel-header">
+          <h2>📥 HTML Input</h2>
+          <button id="clearInput" class="btn btn-secondary btn-small">Clear</button>
+        </div>
+        <textarea id="htmlInput" placeholder="Paste your raw HTML here..."></textarea>
+      </div>
+
+      <div class="action-buttons">
+        <button id="cleanBtn" class="btn btn-primary btn-large">
+          <span class="btn-icon">✨</span>
+          Clean
+        </button>
+      </div>
+
+      <div class="panel output-panel">
+        <div class="panel-header">
+          <h2>📤 Clean Output</h2>
+          <div class="output-actions">
+            <button id="copyBtn" class="btn btn-secondary btn-small" disabled>Copy</button>
+            <button id="downloadBtn" class="btn btn-secondary btn-small" disabled>Download</button>
+          </div>
+        </div>
+        <textarea id="cleanOutput" readonly placeholder="Cleaned content will appear here..."></textarea>
+        <div class="stats" id="stats"></div>
+      </div>
+    </main>
+
+    <footer>
+      <p>100% client-side • No data sent to servers • Works offline</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="dist/app.js"></script>
+</body>
+</html>
