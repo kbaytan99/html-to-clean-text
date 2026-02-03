@@ -60,7 +60,19 @@ export function parseAndClean(html) {
     const mainContent = doc.querySelector('main, article, [role="main"], #content, .content, #main, .main, .post, .article, .entry-content, .post-content');
     const body = mainContent || doc.body || doc.documentElement;
     // Extract structured content
-    const elements = extractElements(body);
+    let elements = extractElements(body);
+    // Fallback: if no elements found, try to get ALL text from body
+    if (elements.length === 0 && doc.body) {
+        const fallbackText = doc.body.textContent?.trim() || '';
+        if (fallbackText.length > 50) {
+            // Split by newlines and create paragraphs
+            const lines = fallbackText.split(/\n+/).filter(line => line.trim().length > 10);
+            elements = lines.map(line => ({
+                type: 'paragraph',
+                content: line.trim()
+            }));
+        }
+    }
     return elements;
 }
 /**

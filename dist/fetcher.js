@@ -7,6 +7,38 @@ const CORS_PROXIES = [
     { url: 'https://corsproxy.io/?', isJson: false },
     { url: 'https://api.codetabs.com/v1/proxy?quest=', isJson: false },
 ];
+// Blocked sites that require JavaScript rendering
+const BLOCKED_DOMAINS = [
+    'youtube.com', 'youtu.be', 'www.youtube.com', 'm.youtube.com',
+    'twitter.com', 'x.com', 'www.twitter.com', 'mobile.twitter.com',
+    'facebook.com', 'www.facebook.com', 'm.facebook.com', 'fb.com',
+    'instagram.com', 'www.instagram.com',
+    'tiktok.com', 'www.tiktok.com',
+    'linkedin.com', 'www.linkedin.com',
+    'reddit.com', 'www.reddit.com', 'old.reddit.com',
+    'twitch.tv', 'www.twitch.tv',
+    'discord.com', 'discord.gg',
+    'netflix.com', 'www.netflix.com',
+    'spotify.com', 'open.spotify.com'
+];
+/**
+ * Check if URL is from a blocked domain
+ */
+export function isBlockedDomain(url) {
+    try {
+        const parsed = new URL(url);
+        const hostname = parsed.hostname.toLowerCase();
+        for (const domain of BLOCKED_DOMAINS) {
+            if (hostname === domain || hostname.endsWith('.' + domain)) {
+                return { blocked: true, domain };
+            }
+        }
+        return { blocked: false };
+    }
+    catch {
+        return { blocked: false };
+    }
+}
 /**
  * Validate URL format
  */

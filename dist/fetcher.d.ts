@@ -1,6 +1,13 @@
 /**
  * URL Fetcher - Fetch HTML from URLs using CORS proxies
  */
+/**
+ * Check if URL is from a blocked domain
+ */
+export declare function isBlockedDomain(url: string): {
+    blocked: boolean;
+    domain?: string;
+};
 export interface FetchResult {
     success: boolean;
     html?: string;

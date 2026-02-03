@@ -1,7 +1,7 @@
 import type { OutputMode, CleaningStats } from './types.js';
 import { parseAndClean, toPlainText, toMarkdown } from './cleaner.js';
 import { toJSON, estimateTokens } from './chunker.js';
-import { fetchUrl, isValidUrl, type FetchProgress } from './fetcher.js';
+import { fetchUrl, isValidUrl, isBlockedDomain, type FetchProgress } from './fetcher.js';
 
 // DOM Elements
 const htmlInput = document.getElementById('htmlInput') as HTMLTextAreaElement;
@@ -94,7 +94,14 @@ function cleanHTML(): void {
     const elements = parseAndClean(html);
     
     if (elements.length === 0) {
-      showToast('No meaningful content found in the HTML', 'error');
+      // Check if it's a JavaScript-heavy site
+      const isJSHeavy = html.includes('<script') && (html.match(/<script/g) || []).length > 5;
+      
+      if (isJSHeavy) {
+        showToast('This site uses JavaScript to load content. Try using browser\'s Reader Mode or copy the visible text directly.', 'error');
+      } else {
+        showToast('No meaningful content found in the HTML. The page might be empty or use dynamic loading.', 'error');
+      }
       cleanOutput.value = '';
       currentOutput = '';
       statsEl.innerHTML = '';
@@ -274,6 +281,13 @@ async function fetchFromUrl(): Promise<void> {
   
   if (!isValidUrl(url)) {
     showToast('Please enter a valid URL (http:// or https://)', 'error');
+    return;
+  }
+  
+  // Check for blocked domains
+  const blockCheck = isBlockedDomain(url);
+  if (blockCheck.blocked) {
+    showToast(`⛔ ${blockCheck.domain} is not supported. These sites require JavaScript rendering.`, 'error');
     return;
   }
   
